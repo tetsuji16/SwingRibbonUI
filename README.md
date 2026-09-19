@@ -5,12 +5,12 @@ It deliberately does not depend on FlatLaf, an icon library, a resource format, 
 
 ## Visual reference
 
-![microProject application ribbon](docs/images/microproject-ribbon-reference.png)
+![microProject ribbon UI](docs/images/microproject-ribbon-only.png)
 
-This is a direct capture of the microProject application window that informed the
-ribbon design. It contains the application only—no desktop, taskbar, or unrelated
-windows—and is included as a high-fidelity visual reference rather than a generated
-mockup.
+This is a pixel-preserving crop of the microProject application ribbon, from the
+tab row through the command bands. It contains no title bar, desktop, taskbar, or
+unrelated windows, and is included as a high-fidelity visual reference rather than
+a generated mockup.
 
 ## Features
 
