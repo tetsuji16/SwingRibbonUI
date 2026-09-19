@@ -3,7 +3,14 @@
 `SwingRibbonUI` is a small, dependency-free Office-style ribbon component for Java Swing.
 It deliberately does not depend on FlatLaf, an icon library, a resource format, or an application's command framework.
 
-![SwingRibbonUI preview](docs/images/swing-ribbon-ui.png)
+## Visual reference
+
+![microProject application ribbon](docs/images/microproject-ribbon-reference.png)
+
+This is a direct capture of the microProject application window that informed the
+ribbon design. It contains the application only—no desktop, taskbar, or unrelated
+windows—and is included as a high-fidelity visual reference rather than a generated
+mockup.
 
 ## Features
 
