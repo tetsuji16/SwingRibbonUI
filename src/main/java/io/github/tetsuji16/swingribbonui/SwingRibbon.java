@@ -171,6 +171,11 @@ public final class SwingRibbon extends JPanel {
 		button.setActionCommand(item.id());
 		button.setFont(theme.commandFont());
 		button.setFocusable(false);
+		button.setOpaque(true);
+		button.setBackground(theme.surfaceBackground());
+		button.setBorder(BorderFactory.createCompoundBorder(
+			BorderFactory.createLineBorder(theme.borderColor()), BorderFactory.createEmptyBorder(2, 4, 2, 4)));
+		button.setIconTextGap(6);
 		button.setMargin(new Insets(3, 7, 3, 7));
 		if (action != null) button.addActionListener(action);
 		int height = item.size() == RibbonItem.Size.LARGE ? theme.commandHeight() - 22 : 28;
