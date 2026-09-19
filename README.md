@@ -16,8 +16,10 @@ mockup.
 
 - Immutable tab, band, and command metadata
 - Host-provided Swing `Action`, icon, localization, and theme integration
+- Normal, toggle, drop-down, and split-button command controls
+- Large, medium, and compact command sizing with icon-over-label large commands
+- Optional application header with AutoSave control, quick-access actions, title, and search field
 - Contextual tabs
-- Responsive command groups
 - Always-show, tabs-only, and auto-hide display modes
 - Tab context menu for expand/collapse
 
@@ -36,6 +38,22 @@ frame.add(ribbon, BorderLayout.NORTH);
 ```
 
 The component does not mutate a document model or post Undo edits. A host command owns those responsibilities.
+
+For the application title/quick-access/search row, compose the optional header above the ribbon:
+
+```java
+var header = new RibbonApplicationHeader(
+    "Commercial construction project plan",
+    autoSaveAction, List.of(saveAction, undoAction, redoAction), searchAction,
+    new DefaultRibbonTheme());
+frame.add(header, BorderLayout.NORTH);
+```
+
+Use `RibbonControlKind.TOGGLE`, `DROP_DOWN`, or `SPLIT_BUTTON` with menu entries to model
+their Office-style interaction. The host supplies the localized labels, icons, and `Action`
+implementations, including selection, enablement, and persistence semantics.
+`AUTO_HIDE` is host-controlled: call `reveal()` when your window decides that
+the ribbon should become visible again.
 
 ## Build
 

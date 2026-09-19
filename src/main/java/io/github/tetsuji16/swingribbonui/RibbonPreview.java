@@ -28,6 +28,7 @@ public final class RibbonPreview {
 
 	private static void render() {
 		try {
+			DefaultRibbonTheme theme = new DefaultRibbonTheme();
 			SwingRibbon ribbon = new SwingRibbon(List.of(
 				new RibbonTab("file", "File", List.of(new RibbonBand("document", "Document", List.of(
 					new RibbonItem("new", "New", new PreviewIcon(PreviewIcon.Kind.NEW), RibbonItem.Size.LARGE),
@@ -35,11 +36,12 @@ public final class RibbonPreview {
 					new RibbonItem("save", "Save", new PreviewIcon(PreviewIcon.Kind.SAVE), RibbonItem.Size.LARGE))))),
 				new RibbonTab("home", "Home", List.of(
 					new RibbonBand("clipboard", "Clipboard", List.of(
-						new RibbonItem("paste", "Paste", new PreviewIcon(PreviewIcon.Kind.PASTE), RibbonItem.Size.MEDIUM),
-						new RibbonItem("copy", "Copy", new PreviewIcon(PreviewIcon.Kind.COPY), RibbonItem.Size.MEDIUM))),
+					new RibbonItem("paste", "Paste", new PreviewIcon(PreviewIcon.Kind.PASTE), RibbonItem.Size.LARGE),
+					new RibbonItem("copy", "Copy", new PreviewIcon(PreviewIcon.Kind.COPY), RibbonItem.Size.MEDIUM))),
 					new RibbonBand("font", "Font", List.of(
-						new RibbonItem("bold", "Bold", new PreviewIcon(PreviewIcon.Kind.NEW), RibbonItem.Size.MEDIUM),
-						new RibbonItem("color", "Color", new PreviewIcon(PreviewIcon.Kind.REPLACE), RibbonItem.Size.MEDIUM))),
+					new RibbonItem("bold", "Bold", new PreviewIcon(PreviewIcon.Kind.NEW), RibbonItem.Size.MEDIUM, RibbonControlKind.TOGGLE),
+					new RibbonItem("color", "Color", new PreviewIcon(PreviewIcon.Kind.REPLACE), RibbonItem.Size.MEDIUM,
+						RibbonControlKind.SPLIT_BUTTON, List.of(new RibbonMenuItem("theme", "Theme colors"))))),
 					new RibbonBand("paragraph", "Paragraph", List.of(
 						new RibbonItem("bullets", "Bullets", new PreviewIcon(PreviewIcon.Kind.ARRANGE), RibbonItem.Size.MEDIUM),
 						new RibbonItem("align", "Align", new PreviewIcon(PreviewIcon.Kind.COPY), RibbonItem.Size.MEDIUM))),
@@ -51,14 +53,15 @@ public final class RibbonPreview {
 					new RibbonItem("arrange", "Arrange", new PreviewIcon(PreviewIcon.Kind.ARRANGE), RibbonItem.Size.MEDIUM)))))
 			), id -> new AbstractAction(id) {
 				@Override public void actionPerformed(java.awt.event.ActionEvent event) { }
-			});
+			}, theme);
 			ribbon.selectTab("home");
 			JPanel canvas = new JPanel(new java.awt.BorderLayout());
 			canvas.setBackground(new Color(0xf1f3f5));
-			canvas.add(ribbon, java.awt.BorderLayout.NORTH);
-			canvas.setSize(new Dimension(1200, 86));
+			canvas.add(new RibbonApplicationHeader("Commercial construction project plan", List.of(), null, theme), java.awt.BorderLayout.NORTH);
+			canvas.add(ribbon, java.awt.BorderLayout.CENTER);
+			canvas.setSize(new Dimension(1200, 190));
 			layoutRecursively(canvas);
-			BufferedImage image = new BufferedImage(1200, 86, BufferedImage.TYPE_INT_ARGB);
+			BufferedImage image = new BufferedImage(1200, 190, BufferedImage.TYPE_INT_ARGB);
 			Graphics2D graphics = image.createGraphics();
 			try {
 				canvas.printAll(graphics);

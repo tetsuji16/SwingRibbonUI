@@ -24,6 +24,7 @@ import javax.swing.BorderFactory;
 import javax.swing.ButtonGroup;
 import javax.swing.JButton;
 import javax.swing.JComponent;
+import javax.swing.JMenuItem;
 import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
 import javax.swing.JToggleButton;
@@ -53,6 +54,7 @@ public final class SwingRibbon extends JPanel {
 	public SwingRibbon(List<RibbonTab> tabs, RibbonCommandSource commands, RibbonTheme theme) {
 		super(new BorderLayout());
 		this.tabs = List.copyOf(tabs);
+		validateTabIds(this.tabs);
 		this.commands = Objects.requireNonNull(commands);
 		this.theme = Objects.requireNonNull(theme);
 		setOpaque(true);
@@ -115,10 +117,12 @@ public final class SwingRibbon extends JPanel {
 
 	private void build() {
 		tabStrip.setOpaque(true);
+		tabStrip.setName("swingRibbon.tabStrip");
 		tabStrip.setBackground(theme.chromeBackground());
 		tabStrip.setPreferredSize(new Dimension(0, theme.tabHeight()));
 		for (RibbonTab tab : tabs) tabStrip.add(createTabButton(tab));
 		commandSurface.setOpaque(true);
+		commandSurface.setName("swingRibbon.commandSurface");
 		commandSurface.setBackground(theme.surfaceBackground());
 		add(tabStrip, BorderLayout.NORTH);
 		add(commandSurface, BorderLayout.CENTER);
@@ -131,13 +135,17 @@ public final class SwingRibbon extends JPanel {
 		button.setVisible(!tab.contextual());
 		button.setFocusable(false);
 		button.setBorder(BorderFactory.createEmptyBorder(4, 10, 4, 10));
+		button.setContentAreaFilled(false);
 		button.setBackground(theme.chromeBackground());
 		button.setFont(theme.tabFont());
 		button.setForeground(theme.unselectedTabColor());
 		button.setHorizontalAlignment(SwingConstants.LEFT);
 		button.addActionListener(event -> selectTab(tab.id()));
-		button.getModel().addChangeListener(event -> button.setForeground(button.isSelected()
-			? theme.selectedTabColor() : theme.unselectedTabColor()));
+		button.getModel().addChangeListener(event -> {
+			button.setForeground(button.isSelected() ? theme.selectedTabColor() : theme.unselectedTabColor());
+			button.setContentAreaFilled(button.isSelected() || button.getModel().isRollover());
+			button.setBackground(button.isSelected() ? new Color(0xe7f1fb) : new Color(0xf0f4f8));
+		});
 		button.addMouseListener(new MouseAdapter() {
 			@Override public void mousePressed(MouseEvent event) { showTabPopup(event); }
 			@Override public void mouseReleased(MouseEvent event) { showTabPopup(event); }
@@ -164,23 +172,102 @@ public final class SwingRibbon extends JPanel {
 		return panel;
 	}
 
-	private AbstractButton createCommandButton(RibbonItem item) {
+	private JComponent createCommandButton(RibbonItem item) {
+		return switch (item.kind()) {
+			case BUTTON -> configureCommandButton(new JButton(item.text(), item.icon()), item, true);
+			case TOGGLE -> configureCommandButton(new JToggleButton(item.text(), item.icon()), item, true);
+			case DROP_DOWN -> createDropDownButton(item);
+			case SPLIT_BUTTON -> createSplitButton(item);
+		};
+	}
+
+	private <T extends AbstractButton> T configureCommandButton(T button, RibbonItem item, boolean bindPrimaryAction) {
 		Action action = commands.actionFor(item.id());
-		JButton button = new JButton(item.text(), item.icon());
+		if (bindPrimaryAction && action != null) button.setAction(action);
 		button.setName("swingRibbon.command." + item.id());
+		button.setText(item.text());
+		button.setIcon(item.icon());
 		button.setActionCommand(item.id());
 		button.setFont(theme.commandFont());
 		button.setFocusable(false);
-		button.setOpaque(true);
+		button.setOpaque(false);
+		button.setContentAreaFilled(false);
 		button.setBackground(theme.surfaceBackground());
-		button.setBorder(BorderFactory.createCompoundBorder(
-			BorderFactory.createLineBorder(theme.borderColor()), BorderFactory.createEmptyBorder(2, 4, 2, 4)));
-		button.setIconTextGap(6);
+		button.setBorder(BorderFactory.createEmptyBorder(3, 5, 3, 5));
+		button.setRolloverEnabled(true);
+		button.setIconTextGap(item.size() == RibbonItem.Size.LARGE ? 5 : 6);
 		button.setMargin(new Insets(3, 7, 3, 7));
-		if (action != null) button.addActionListener(action);
-		int height = item.size() == RibbonItem.Size.LARGE ? theme.commandHeight() - 22 : 28;
-		button.setPreferredSize(new Dimension(item.size() == RibbonItem.Size.LARGE ? 78 : 110, height));
+		if (bindPrimaryAction && action == null) button.setEnabled(false);
+		configureSize(button, item.size());
+		installCommandInteractionStyle(button);
+		button.getAccessibleContext().setAccessibleName(item.text());
 		return button;
+	}
+
+	private void installCommandInteractionStyle(AbstractButton button) {
+		button.getModel().addChangeListener(event -> {
+			boolean selected = button.getModel().isSelected();
+			boolean active = selected || button.getModel().isRollover() || button.getModel().isPressed();
+			button.setContentAreaFilled(active);
+			button.setOpaque(active);
+			button.setBackground(selected ? new Color(0xdbeeff) : new Color(0xf0f6fc));
+			button.setForeground(selected ? theme.selectedTabColor() : Color.DARK_GRAY);
+		});
+	}
+
+	private void configureSize(AbstractButton button, RibbonItem.Size size) {
+		switch (size) {
+			case LARGE -> {
+				button.setHorizontalTextPosition(SwingConstants.CENTER);
+				button.setVerticalTextPosition(SwingConstants.BOTTOM);
+				button.setPreferredSize(new Dimension(76, theme.commandHeight() - 8));
+			}
+			case MEDIUM -> button.setPreferredSize(new Dimension(104, 30));
+			case SMALL -> button.setPreferredSize(new Dimension(82, 24));
+		}
+	}
+
+	private JButton createDropDownButton(RibbonItem item) {
+		JButton button = configureCommandButton(new JButton(item.text() + " \u25be", item.icon()), item, false);
+		button.setEnabled(!item.menuItems().isEmpty() && item.menuItems().stream()
+			.map(menuItem -> commands.actionFor(menuItem.id())).anyMatch(Objects::nonNull));
+		button.addActionListener(event -> showCommandMenu(button, item));
+		return button;
+	}
+
+	private JComponent createSplitButton(RibbonItem item) {
+		JPanel split = new JPanel(new BorderLayout(0, 0));
+		split.setName("swingRibbon.command." + item.id());
+		split.setOpaque(false);
+		JButton primary = configureCommandButton(new JButton(item.text(), item.icon()), item, true);
+		JButton arrow = new JButton("\u25be");
+		arrow.setName("swingRibbon.commandMenu." + item.id());
+		arrow.setFocusable(false);
+		arrow.setMargin(new Insets(2, 5, 2, 5));
+		arrow.setBorder(BorderFactory.createEmptyBorder(2, 5, 2, 5));
+		arrow.setContentAreaFilled(false);
+		arrow.setRolloverEnabled(true);
+		installCommandInteractionStyle(arrow);
+		arrow.addActionListener(event -> showCommandMenu(arrow, item));
+		split.add(primary, BorderLayout.CENTER);
+		split.add(arrow, BorderLayout.EAST);
+		split.setPreferredSize(new Dimension(primary.getPreferredSize().width + 21, primary.getPreferredSize().height));
+		return split;
+	}
+
+	private void showCommandMenu(Component owner, RibbonItem item) {
+		if (item.menuItems().isEmpty()) return;
+		JPopupMenu popup = new JPopupMenu();
+		for (RibbonMenuItem menuItem : item.menuItems()) {
+			Action action = commands.actionFor(menuItem.id());
+			JMenuItem entry = action == null ? new JMenuItem(menuItem.text(), menuItem.icon()) : new JMenuItem(action);
+			entry.setName("swingRibbon.commandMenuItem." + menuItem.id());
+			entry.setText(menuItem.text());
+			entry.setIcon(menuItem.icon());
+			if (action == null) entry.setEnabled(false);
+			popup.add(entry);
+		}
+		popup.show(owner, 0, owner.getHeight());
 	}
 
 	private void showTabPopup(MouseEvent event) {
@@ -200,5 +287,12 @@ public final class SwingRibbon extends JPanel {
 
 	private java.util.Optional<RibbonTab> firstVisibleTab() {
 		return tabs.stream().filter(tab -> !tab.contextual() || contextualTabs.contains(tab.id())).findFirst();
+	}
+
+	private static void validateTabIds(List<RibbonTab> tabs) {
+		Set<String> ids = new LinkedHashSet<>();
+		for (RibbonTab tab : tabs) {
+			if (!ids.add(tab.id())) throw new IllegalArgumentException("Duplicate ribbon tab ID: " + tab.id());
+		}
 	}
 }
