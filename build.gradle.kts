@@ -29,3 +29,10 @@ dependencies {
 tasks.test {
 	useJUnitPlatform()
 }
+
+tasks.register<JavaExec>("generatePreview") {
+	group = "documentation"
+	description = "Renders the deterministic README ribbon preview without capturing the desktop."
+	classpath = sourceSets.main.get().runtimeClasspath
+	mainClass.set("io.github.tetsuji16.swingribbonui.RibbonPreview")
+}

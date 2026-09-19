@@ -3,6 +3,8 @@
 `SwingRibbonUI` is a small, dependency-free Office-style ribbon component for Java Swing.
 It deliberately does not depend on FlatLaf, an icon library, a resource format, or an application's command framework.
 
+![SwingRibbonUI preview](docs/images/swing-ribbon-ui.png)
+
 ## Features
 
 - Immutable tab, band, and command metadata
@@ -34,7 +36,10 @@ Requires JDK 25 or newer.
 
 ```powershell
 .\gradlew.bat test
+.\gradlew.bat generatePreview
 ```
+
+`generatePreview` renders the component off screen. It never captures the desktop.
 
 ## License
 
